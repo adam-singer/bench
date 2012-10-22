@@ -58,7 +58,7 @@ class _BenchmarkMethod {
 class _BenchmarkLibrary {
   
   final LibraryMirror library;
-  final HashSet<_BenchmarkMethod> benchmarks;
+  final List<_BenchmarkMethod> benchmarks;
   final int iterations; // TODO: allow this to be set via annotation
   
   factory _BenchmarkLibrary.verify(LibraryMirror library) {
@@ -68,7 +68,7 @@ class _BenchmarkLibrary {
   }
   
   _BenchmarkLibrary._parse(this.library, {this.iterations:100})
-      : benchmarks = new HashSet<_BenchmarkMethod>() {
+      : benchmarks = new List<_BenchmarkMethod>() {
     _logger.fine('parsing library ${library.qualifiedName} for benchmarks');        
     for(var method in library.functions.getValues()) {            
       if(method.isTopLevel) {
@@ -89,7 +89,7 @@ class _BenchmarkLibrary {
     
   Future run([int count=0]) {
     var completer = new Completer();
-    // TODO: sort the benchmarks (use List) each iteration
+    // TODO: randomize the benchmarks each iteration using List.sort()
     _runBenchmarks().then((x) {
       if(++count == iterations) completer.complete(null);
       else run(count).then((x) => completer.complete(null));
@@ -111,10 +111,10 @@ class _BenchmarkLibrary {
 
 class Benchmarker {
   
-  final HashSet<_BenchmarkLibrary> _libraries;
+  final List<_BenchmarkLibrary> _libraries;
   bool _isInitialized = false;
   
-  Benchmarker() : _libraries = new HashSet<_BenchmarkLibrary>();
+  Benchmarker() : _libraries = new List<_BenchmarkLibrary>();
         
   Future run() {
     _logger.info('running benchmarker');
@@ -138,7 +138,9 @@ class Benchmarker {
   }
   
   void _report() {
+    // TODO: sort alphabetically for consistent report
     _libraries.forEach((library) {
+      // TODO: sort alphabetically for consistent report
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark.iterations;
         _logger.info('${benchmark.method.qualifiedName} took '
