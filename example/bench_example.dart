@@ -6,13 +6,9 @@ import 'package:bench/bench.dart';
 
 void main() {
   
-  Logger.root.on.record.add(logPrinter);
+  Logger.root.on.record.add((record) => print('${record.message}'));
   
   new Benchmarker().run(libraryIterations:50);
-}
-
-void logPrinter(LogRecord record) {
-  print('${record.message}');
 }
 
 Benchmark benchSomething() {
