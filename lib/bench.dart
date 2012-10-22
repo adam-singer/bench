@@ -4,10 +4,14 @@ library bench;
 
 import 'dart:mirrors';
 
+import 'package:logging/logging.dart';
+
 typedef void Benchmark();
 
 /// TODO: async benchmarks are not yet supported, coming soon!
 typedef Future BenchmarkAsync();
+
+Logger _logger = new Logger('bench');
 
 /// Internal representation of a benchmark method.
 class _BenchmarkMethod {
@@ -58,17 +62,14 @@ class _BenchmarkLibrary {
   final int iterations; // TODO: allow this to be set via annotation
   
   factory _BenchmarkLibrary.verify(LibraryMirror library) {
-    // TODO: use logging library
-    //print('parsing library ${library.qualifiedName} for benchmarks');
     var benchmarkLibrary = new _BenchmarkLibrary._parse(library);
-//    print('library ${library.qualifiedName} has '
-//        '${benchmarkLibrary.benchmarks.length} benchmarks');
     if(benchmarkLibrary.benchmarks.length > 0) return benchmarkLibrary;    
     return null;
   }
   
   _BenchmarkLibrary._parse(this.library, {this.iterations:100})
       : benchmarks = new HashSet<_BenchmarkMethod>() {
+    _logger.fine('parsing library ${library.qualifiedName} for benchmarks');        
     for(var method in library.functions.getValues()) {            
       if(method.isTopLevel) {
         // TODO: look for annotation instead of using naming convention
@@ -79,14 +80,13 @@ class _BenchmarkLibrary {
               && method.returnType is TypedefMirror
               && method.returnType.qualifiedName.startsWith('bench.Benchmark')) {
             
-            // TODO: use logging library
-            //print("found benchmark method: ${method.simpleName}");
-            
+            _logger.finer("found benchmark method: ${method.simpleName}");            
             benchmarks.add(new _BenchmarkMethod(method));
           }
         }
       }
     }
+    _logger.fine('${library.qualifiedName} : ${benchmarks.length} benchmarks');
   }
     
   Future run([int count=0]) {
@@ -113,13 +113,13 @@ class _BenchmarkLibrary {
 
 class Benchmarker {
   
-  final HashSet<_BenchmarkLibrary> libraries;
+  final HashSet<_BenchmarkLibrary> _libraries;
   bool _isInitialized = false;
   
-  Benchmarker() : libraries = new HashSet<_BenchmarkLibrary>();
+  Benchmarker() : _libraries = new HashSet<_BenchmarkLibrary>();
         
   Future run() {
-    print("running benchmarker");
+    _logger.info('running benchmarker');
     _initialize();
     _runLibraries().then((x) {
       _report();
@@ -128,7 +128,7 @@ class Benchmarker {
 
   void _addLibrary(LibraryMirror library) {    
     var benchmarkLibrary = new _BenchmarkLibrary.verify(library);
-    if(benchmarkLibrary != null) libraries.add(benchmarkLibrary);
+    if(benchmarkLibrary != null) _libraries.add(benchmarkLibrary);
   }
   
   void _initialize() {
@@ -140,10 +140,10 @@ class Benchmarker {
   }
   
   void _report() {
-    libraries.forEach((library) {
+    _libraries.forEach((library) {
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark.iterations;
-        print('${benchmark.method.qualifiedName} took '
+        _logger.info('${benchmark.method.qualifiedName} took '
             '${benchmark.stopwatch.elapsedInMs()} ms for ${iterations} iterations');  
       });
     });
@@ -151,7 +151,7 @@ class Benchmarker {
   
   Future _runLibraries([Iterator it = null]) {
     var completer = new Completer();
-    if(it == null) it = libraries.iterator();
+    if(it == null) it = _libraries.iterator();
     if(!it.hasNext()) completer.complete(null);
     else {
       it.next().run().then((x) {      
