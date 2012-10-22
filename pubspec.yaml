@@ -3,4 +3,4 @@ description: a micro benchmark library for dart
 author: Ross Smith
 homepage: https://github.com/rmsmith/bench
 dependencies:
-  unittest: { sdk: logging }
+  logging: { sdk: logging }
