@@ -73,16 +73,14 @@ class _BenchmarkLibrary {
     for(var method in library.functions.getValues()) {            
       if(method.isTopLevel) {
         // TODO: look for annotation instead of using naming convention
-        if(method.simpleName.startsWith('bench')) {
+        if(method.simpleName.startsWith('bench')
+            && method.parameters.length == 0
+            // TODO: is there a better way to validate the returnType?
+            && method.returnType is TypedefMirror
+            && method.returnType.qualifiedName.startsWith('bench.Benchmark')) {
           
-          if(method.parameters.length == 0 
-              // TODO: is there a better way to validate the returnType?
-              && method.returnType is TypedefMirror
-              && method.returnType.qualifiedName.startsWith('bench.Benchmark')) {
-            
-            _logger.finer("found benchmark method: ${method.simpleName}");            
-            benchmarks.add(new _BenchmarkMethod(method));
-          }
+          _logger.finer("found benchmark method: ${method.simpleName}");            
+          benchmarks.add(new _BenchmarkMethod(method));
         }
       }
     }
@@ -144,7 +142,8 @@ class Benchmarker {
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark.iterations;
         _logger.info('${benchmark.method.qualifiedName} took '
-            '${benchmark.stopwatch.elapsedInMs()} ms for ${iterations} iterations');  
+            '${benchmark.stopwatch.elapsedInMs()} ms for '
+            '${iterations} iterations');  
       });
     });
   }
