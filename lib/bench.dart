@@ -61,13 +61,15 @@ class _BenchmarkLibrary {
   final List<_BenchmarkMethod> benchmarks;
   final int iterations; // TODO: allow this to be set via annotation
   
-  factory _BenchmarkLibrary.verify(LibraryMirror library) {
-    var benchmarkLibrary = new _BenchmarkLibrary._parse(library);
+  factory _BenchmarkLibrary.check(LibraryMirror library, 
+      int libraryIterations) {
+    var benchmarkLibrary = 
+        new _BenchmarkLibrary._parse(library, libraryIterations);
     if(benchmarkLibrary.benchmarks.length > 0) return benchmarkLibrary;    
     return null;
   }
   
-  _BenchmarkLibrary._parse(this.library, {this.iterations:100})
+  _BenchmarkLibrary._parse(this.library, this.iterations)
       : benchmarks = new List<_BenchmarkMethod>() {
     _logger.fine('parsing library ${library.qualifiedName} for benchmarks');        
     for(var method in library.functions.getValues()) {            
@@ -116,23 +118,24 @@ class Benchmarker {
   
   Benchmarker() : _libraries = new List<_BenchmarkLibrary>();
         
-  Future run() {
+  Future run({int libraryIterations:100}) {
     _logger.info('running benchmarker');
-    _initialize();
+    _initialize(libraryIterations);
     _runLibraries().then((x) {
       _report();
     });
   }
 
-  void _addLibrary(LibraryMirror library) {    
-    var benchmarkLibrary = new _BenchmarkLibrary.verify(library);
+  void _addLibrary(LibraryMirror library, int libraryIterations) {    
+    var benchmarkLibrary = 
+        new _BenchmarkLibrary.check(library, libraryIterations);
     if(benchmarkLibrary != null) _libraries.add(benchmarkLibrary);
   }
   
-  void _initialize() {
+  void _initialize(int libraryIterations) {
     if(!_isInitialized) {
       currentMirrorSystem().libraries.getValues().forEach((library) {
-        _addLibrary(library);
+        _addLibrary(library, libraryIterations);
       });
     }
   }
