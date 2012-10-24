@@ -129,24 +129,23 @@ class Benchmarker {
   
   Benchmarker() : _libraries = new List<_BenchmarkLibrary>();
         
-  Future run({int libraryIterations:100}) {
+  Future run({int iterations:1}) {
     _logger.info('running benchmarker');
-    _initialize(libraryIterations);
+    _initialize(iterations);
     _runLibraries().then((x) {
       _report();
     });
   }
 
-  void _addLibrary(LibraryMirror library, int libraryIterations) {    
-    var benchmarkLibrary = new _BenchmarkLibrary.check(library, 
-        libraryIterations);
+  void _addLibrary(LibraryMirror library, int iterations) {    
+    var benchmarkLibrary = new _BenchmarkLibrary.check(library, iterations);
     if(benchmarkLibrary != null) _libraries.add(benchmarkLibrary);
   }
   
-  void _initialize(int libraryIterations) {
+  void _initialize(int iterations) {
     if(!_isInitialized) {
       currentMirrorSystem().libraries.getValues().forEach((library) {
-        _addLibrary(library, libraryIterations);
+        _addLibrary(library, iterations);
       });
       // TODO: sort libraries for consistency
     }

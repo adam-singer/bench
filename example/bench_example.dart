@@ -8,7 +8,7 @@ void main() {
   
   Logger.root.on.record.add((record) => print('${record.message}'));
   
-  new Benchmarker().run(libraryIterations:1);
+  new Benchmarker().run();
 }
 
 Benchmark pollardRho() {
@@ -40,5 +40,5 @@ Benchmark pollardRho() {
   
   return new Benchmark(() {
     rho(n);
-  }, iterations:2, description:"Pollard's Rho algorithm for n ${n}");
+  }, iterations:2, description:"Pollard's rho algorithm for n ${n}");
 }
