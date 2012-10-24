@@ -86,6 +86,7 @@ class _BenchmarkLibrary {
         }
       }
     }
+    // TODO: sort benchmarks for consistency
     _logger.fine('${library.qualifiedName} : ${benchmarks.length} benchmarks');
   }
     
@@ -137,13 +138,12 @@ class Benchmarker {
       currentMirrorSystem().libraries.getValues().forEach((library) {
         _addLibrary(library, libraryIterations);
       });
+      // TODO: sort libraries for consistency
     }
   }
   
   void _report() {
-    // TODO: sort alphabetically for consistent report
     _libraries.forEach((library) {
-      // TODO: sort alphabetically for consistent report
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark.iterations;
         _logger.info('${benchmark.method.qualifiedName} took '
