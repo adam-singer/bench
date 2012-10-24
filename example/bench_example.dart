@@ -8,10 +8,10 @@ void main() {
   
   Logger.root.on.record.add((record) => print('${record.message}'));
   
-  new Benchmarker().run(libraryIterations:3, methodIterations:2);
+  new Benchmarker().run(libraryIterations:1);
 }
 
-Benchmark benchPollardRho() {
+Benchmark pollardRho() {
   // http://en.wikipedia.org/wiki/Pollard's_rho_algorithm
   
   int gcd(int a, int b) {
@@ -38,7 +38,7 @@ Benchmark benchPollardRho() {
   
   int n = 329569479697;
   
-  return () {
+  return new Benchmark(() {
     rho(n);
-  };
+  }, iterations:2, description:"Pollard's Rho algorithm for n ${n}");
 }
