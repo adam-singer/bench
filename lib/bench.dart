@@ -17,11 +17,10 @@ Logger _logger = new Logger('bench');
 class _BenchmarkMethod {
   
   final MethodMirror method;  
-  final String description; // TODO: allow this to be set via annotation
   final int iterations; // TODO: allow this to be set via annotation
   final Stopwatch stopwatch;
   
-  _BenchmarkMethod(this.method, {this.description:"", this.iterations:1000})
+  _BenchmarkMethod(this.method, this.iterations)
       : stopwatch = new Stopwatch();
   
   Future run(LibraryMirror library) {
@@ -62,14 +61,14 @@ class _BenchmarkLibrary {
   final int iterations; // TODO: allow this to be set via annotation
   
   factory _BenchmarkLibrary.check(LibraryMirror library, 
-      int libraryIterations) {
-    var benchmarkLibrary = 
-        new _BenchmarkLibrary._parse(library, libraryIterations);
+      int libraryIterations, int methodIterations) {
+    var benchmarkLibrary = new _BenchmarkLibrary._parse(library, 
+        libraryIterations, methodIterations);
     if(benchmarkLibrary.benchmarks.length > 0) return benchmarkLibrary;    
     return null;
   }
   
-  _BenchmarkLibrary._parse(this.library, this.iterations)
+  _BenchmarkLibrary._parse(this.library, this.iterations, int methodIterations)
       : benchmarks = new List<_BenchmarkMethod>() {
     _logger.fine('parsing library ${library.qualifiedName} for benchmarks');        
     for(var method in library.functions.getValues()) {            
@@ -82,7 +81,7 @@ class _BenchmarkLibrary {
             && method.returnType.qualifiedName.startsWith('bench.Benchmark')) {
           
           _logger.finer("found benchmark method: ${method.simpleName}");            
-          benchmarks.add(new _BenchmarkMethod(method));
+          benchmarks.add(new _BenchmarkMethod(method, methodIterations));
         }
       }
     }
@@ -119,24 +118,25 @@ class Benchmarker {
   
   Benchmarker() : _libraries = new List<_BenchmarkLibrary>();
         
-  Future run({int libraryIterations:100}) {
+  Future run({int libraryIterations:100, int methodIterations:1000}) {
     _logger.info('running benchmarker');
-    _initialize(libraryIterations);
+    _initialize(libraryIterations, methodIterations);
     _runLibraries().then((x) {
       _report();
     });
   }
 
-  void _addLibrary(LibraryMirror library, int libraryIterations) {    
-    var benchmarkLibrary = 
-        new _BenchmarkLibrary.check(library, libraryIterations);
+  void _addLibrary(LibraryMirror library, int libraryIterations, 
+                   int methodIterations) {    
+    var benchmarkLibrary = new _BenchmarkLibrary.check(library, 
+        libraryIterations, methodIterations);
     if(benchmarkLibrary != null) _libraries.add(benchmarkLibrary);
   }
   
-  void _initialize(int libraryIterations) {
+  void _initialize(int libraryIterations, int methodIterations) {
     if(!_isInitialized) {
       currentMirrorSystem().libraries.getValues().forEach((library) {
-        _addLibrary(library, libraryIterations);
+        _addLibrary(library, libraryIterations, methodIterations);
       });
       // TODO: sort libraries for consistency
     }
@@ -146,9 +146,10 @@ class Benchmarker {
     _libraries.forEach((library) {
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark.iterations;
-        _logger.info('${benchmark.method.qualifiedName} took '
-            '${benchmark.stopwatch.elapsedInMs()} ms for '
-            '${iterations} iterations');  
+        var averageMs = benchmark.stopwatch.elapsedInMs() ~/ iterations;
+        _logger.info('${benchmark.method.qualifiedName} : '
+            '(${benchmark.stopwatch.elapsedInMs()} ms / '
+            '${iterations} iterations) = $averageMs');  
       });
     });
   }
