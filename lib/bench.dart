@@ -129,9 +129,9 @@ class Benchmarker {
   
   Benchmarker() : _libraries = new List<_BenchmarkLibrary>();
         
-  Future run({int iterations:1}) {
-    _logger.info('running benchmarker');
+  Future run({int iterations:1}) {    
     _initialize(iterations);
+    _logger.info('running benchmarks');
     _runLibraries().then((x) {
       _report();
     });
@@ -144,7 +144,9 @@ class Benchmarker {
   
   void _initialize(int iterations) {
     if(!_isInitialized) {
-      currentMirrorSystem().libraries.getValues().forEach((library) {
+      var mirrors = currentMirrorSystem();
+      _logger.info('initializing isolate: ${mirrors.isolate.debugName}');
+      mirrors.libraries.getValues().forEach((library) {
         _addLibrary(library, iterations);
       });
       // TODO: sort libraries for consistency
