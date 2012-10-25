@@ -40,5 +40,5 @@ Benchmark pollardRho() {
   
   return new Benchmark(() {
     rho(n);
-  }, iterations:2, description:"Pollard's rho algorithm for n ${n}");
+  }, iterations:2, description:"Pollard's rho algorithm for n: ${n}");
 }

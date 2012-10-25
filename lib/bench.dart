@@ -25,7 +25,8 @@ class _BenchmarkMethod {
   final MethodMirror method;
   final Stopwatch stopwatch;
   
-  int _iterations; // TODO: use annotation once available
+  String _description; // TODO: use annotation once available
+  int _iterations; // TODO: use annotation once available  
   
   _BenchmarkMethod(this.method)
       : stopwatch = new Stopwatch();
@@ -54,16 +55,16 @@ class _BenchmarkMethod {
   Future<ClosureMirror> _setup(LibraryMirror library) {    
     var completer = new Completer();
     library.invoke(method.simpleName, []).then((benchmark) {
-      benchmark.getField('iterations').then((instance) {
-        _iterations = instance.reflectee;
-        
-        // TODO: reflect description
-        
-        benchmark.getField('method').then((closure) {
-          completer.complete(closure);
+      benchmark.getField('description').then((instance) {
+        _description = instance.reflectee;
+        benchmark.getField('iterations').then((instance) {
+          _iterations = instance.reflectee;
+          benchmark.getField('method').then((closure) {
+            completer.complete(closure);
+          });
         });
       });
-    });    
+    });
     return completer.future;
   }
 }
