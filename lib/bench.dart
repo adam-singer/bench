@@ -22,21 +22,21 @@ Logger _logger = new Logger('bench');
 /// Internal representation of a benchmark method.
 class _BenchmarkMethod {
   
-  final MethodMirror method;
-  final Stopwatch stopwatch;
+  final MethodMirror _method;
+  final Stopwatch _stopwatch;
   
   String _description; // TODO: use annotation once available
   int _iterations; // TODO: use annotation once available  
   
-  _BenchmarkMethod(this.method)
-      : stopwatch = new Stopwatch();
+  _BenchmarkMethod(this._method)
+      : _stopwatch = new Stopwatch();
   
   Future run(LibraryMirror library) {
     var completer = new Completer();
     _setup(library).then((closure) {
-      stopwatch.start();
+      _stopwatch.start();
       _runBenchmark(closure).then((x) {
-        stopwatch.stop();
+        _stopwatch.stop();
         completer.complete(null);
       });
     });
@@ -54,7 +54,7 @@ class _BenchmarkMethod {
   
   Future<ClosureMirror> _setup(LibraryMirror library) {    
     var completer = new Completer();
-    library.invoke(method.simpleName, []).then((benchmark) {
+    library.invoke(_method.simpleName, []).then((benchmark) {
       benchmark.getField('description').then((instance) {
         _description = instance.reflectee;
         benchmark.getField('iterations').then((instance) {
@@ -158,9 +158,9 @@ class Benchmarker {
     _libraries.forEach((library) {
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark._iterations;
-        var averageMs = benchmark.stopwatch.elapsedInMs() ~/ iterations;
-        _logger.info('${benchmark.method.qualifiedName} : '
-            '(${benchmark.stopwatch.elapsedInMs()} ms / '
+        var averageMs = benchmark._stopwatch.elapsedInMs() ~/ iterations;
+        _logger.info('${benchmark._method.qualifiedName} : '
+            '(${benchmark._stopwatch.elapsedInMs()} ms / '
             '${iterations} iterations) = $averageMs');  
       });
     });
