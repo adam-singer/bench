@@ -8,7 +8,10 @@ import 'package:logging/logging.dart';
 
 Logger _logger = new Logger('bench');
 
-/// A representation of a benchmark.
+/**
+ * Benchmark metadata.  
+ * This will likely be replaced by annotations once mirrors support them.
+ */
 class Benchmark {  
   final Function method;
   final String description;
