@@ -115,7 +115,7 @@ class _BenchmarkLibrary {
     if(it == null) it = benchmarks.iterator();
     var benchmark = it.next();
     benchmark.run(library).then((x) {
-      if(!it.hasNext()) completer.complete(null);
+      if(!it.hasNext) completer.complete(null);
       else _runBenchmarks(it).then((x) => completer.complete(null));
     });
     return completer.future;
@@ -169,7 +169,7 @@ class Benchmarker {
   Future _runLibraries([Iterator it = null]) {
     var completer = new Completer();
     if(it == null) it = _libraries.iterator();
-    if(!it.hasNext()) completer.complete(null);
+    if(!it.hasNext) completer.complete(null);
     else {
       it.next().run().then((x) {      
         _runLibraries(it).then((x) => completer.complete(null));
