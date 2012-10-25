@@ -56,5 +56,5 @@ Benchmark timer() {
     });
     
     return completer.future;
-  }, iterations:10, description:"Something asnyc");
+  }, iterations:10, description:"Asynchronous 1.5 second timer");
 }
