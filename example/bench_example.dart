@@ -1,6 +1,7 @@
 
 library bench_example;
 
+import 'dart:isolate';
 import 'package:bench/bench.dart';
 import 'package:logging/logging.dart';
 
@@ -41,4 +42,19 @@ Benchmark pollardRho() {
   return new Benchmark(() {
     rho(n);
   }, iterations:2, description:"Pollard's rho algorithm for n: ${n}");
+}
+
+Benchmark timer() {
+  
+  // perform setup here if you have any
+  
+  return new Benchmark.async(Future async() {
+    var completer = new Completer();
+    
+    new Timer(1500, (t) {
+      completer.complete(null);
+    });
+    
+    return completer.future;
+  }, iterations:10, description:"Something asnyc");
 }

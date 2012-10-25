@@ -6,6 +6,9 @@ import 'dart:mirrors';
 
 import 'package:logging/logging.dart';
 
+Logger _logger = new Logger('bench');
+
+/// A representation of a benchmark.
 class Benchmark {  
   final Function method;
   final String description;
@@ -14,10 +17,9 @@ class Benchmark {
   Benchmark(void method(), {this.description:"", this.iterations:100})
       : method = method;
   
-  // TODO: we could have a named ctor for .async  
+  Benchmark.async(Future method(), {this.description:"", this.iterations:100})
+      : method = method;
 }
-
-Logger _logger = new Logger('bench');
 
 /// Internal representation of a benchmark method.
 class _BenchmarkMethod {
@@ -27,6 +29,7 @@ class _BenchmarkMethod {
   
   String _description; // TODO: use annotation once available
   int _iterations; // TODO: use annotation once available  
+  bool _isAsync;
   
   _BenchmarkMethod(this._method)
       : _stopwatch = new Stopwatch();
@@ -45,9 +48,17 @@ class _BenchmarkMethod {
   
   Future _runBenchmark(ClosureMirror closure, [int count=0]) {
     var completer = new Completer();
-    closure.apply([]).then((x) {
-      if(++count == _iterations) completer.complete(null);
-      else _runBenchmark(closure, count).then((x) => completer.complete(null));
+    closure.apply([]).then((instance) {
+      Future advance() {
+        if(++count == _iterations) completer.complete(null);
+        else _runBenchmark(closure, count).then((x) => completer.complete(null));
+      }
+      // TODO: add some logging here and some error handling, for example
+      // if the user never completes their Future, what happens?
+      
+      // this only works in the current isolate, since reflectee is !simple
+      if(_isAsync) instance.reflectee.then((x) => advance());
+      else advance();    
     });
     return completer.future;
   }
@@ -59,7 +70,10 @@ class _BenchmarkMethod {
         _description = instance.reflectee;
         benchmark.getField('iterations').then((instance) {
           _iterations = instance.reflectee;
-          benchmark.getField('method').then((closure) {
+          benchmark.getField('method').then((instance) {
+            ClosureMirror closure = instance;
+            // TODO: if returnType is 'dynamic' this is ambiguous
+            _isAsync = closure.function.returnType.simpleName == 'Future';            
             completer.complete(closure);
           });
         });
@@ -96,13 +110,12 @@ class _BenchmarkLibrary {
         }
       }
     }
-    // TODO: sort benchmarks for consistency
     _logger.fine('${library.qualifiedName} : ${benchmarks.length} benchmarks');
   }
     
   Future run([int count=0]) {
     var completer = new Completer();
-    // TODO: randomize the benchmarks each iteration using List.sort()
+    // TODO: randomize the benchmarks order each iteration
     _runBenchmarks().then((x) {
       if(++count == iterations) completer.complete(null);
       else run(count).then((x) => completer.complete(null));
@@ -149,7 +162,6 @@ class Benchmarker {
       mirrors.libraries.getValues().forEach((library) {
         _addLibrary(library, iterations);
       });
-      // TODO: sort libraries for consistency
     }
   }
   
