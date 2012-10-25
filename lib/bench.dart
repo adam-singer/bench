@@ -75,9 +75,8 @@ class _BenchmarkLibrary {
   final List<_BenchmarkMethod> benchmarks;
   final int iterations; // TODO: allow this to be set via annotation
   
-  factory _BenchmarkLibrary.check(LibraryMirror library, int iterations) {
-    var benchmarkLibrary = 
-        new _BenchmarkLibrary._parse(library, iterations);
+  factory _BenchmarkLibrary(LibraryMirror library, int iterations) {
+    var benchmarkLibrary = new _BenchmarkLibrary._parse(library, iterations);
     if(benchmarkLibrary.benchmarks.length > 0) return benchmarkLibrary;    
     return null;
   }
@@ -138,7 +137,7 @@ class Benchmarker {
   }
 
   void _addLibrary(LibraryMirror library, int iterations) {    
-    var benchmarkLibrary = new _BenchmarkLibrary.check(library, iterations);
+    var benchmarkLibrary = new _BenchmarkLibrary(library, iterations);
     if(benchmarkLibrary != null) _libraries.add(benchmarkLibrary);
   }
   
@@ -153,6 +152,7 @@ class Benchmarker {
     }
   }
   
+  // TODO: provide an API for custom result parsing / reporting
   void _report() {
     _libraries.forEach((library) {
       library.benchmarks.forEach((benchmark) {
