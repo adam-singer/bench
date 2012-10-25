@@ -158,7 +158,7 @@ class Benchmarker {
     _libraries.forEach((library) {
       library.benchmarks.forEach((benchmark) {
         var iterations = library.iterations * benchmark._iterations;
-        var averageMs = benchmark._stopwatch.elapsedInMs() ~/ iterations;
+        var averageMs = benchmark._stopwatch.elapsedInMs() / iterations;
         _logger.info('${benchmark._method.qualifiedName} : '
             '(${benchmark._stopwatch.elapsedInMs()} ms / '
             '${iterations} iterations) = $averageMs');  

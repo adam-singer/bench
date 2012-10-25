@@ -1,8 +1,8 @@
 
 library bench_example;
 
-import 'package:logging/logging.dart';
 import 'package:bench/bench.dart';
+import 'package:logging/logging.dart';
 
 void main() {
   
