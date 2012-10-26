@@ -3,7 +3,6 @@
 library bench;
 
 import 'dart:mirrors';
-
 import 'package:logging/logging.dart';
 
 Logger _logger = new Logger('bench');
@@ -94,38 +93,38 @@ class _BenchmarkMethod {
 /// Internal representation of a library containing 1 or more benchmark methods.
 class _BenchmarkLibrary {
   
-  final LibraryMirror library;
-  final List<_BenchmarkMethod> benchmarks;
-  final int iterations; // TODO: allow this to be set via annotation
+  final LibraryMirror _library;
+  final List<_BenchmarkMethod> _benchmarks;
+  final int _iterations;
   
   factory _BenchmarkLibrary(LibraryMirror library, int iterations) {
     var benchmarkLibrary = new _BenchmarkLibrary._parse(library, iterations);
-    if(benchmarkLibrary.benchmarks.length > 0) return benchmarkLibrary;    
+    if(benchmarkLibrary._benchmarks.length > 0) return benchmarkLibrary;    
     return null;
   }
   
-  _BenchmarkLibrary._parse(this.library, this.iterations)
-      : benchmarks = new List<_BenchmarkMethod>() {
-    _logger.fine('parsing library ${library.qualifiedName} for benchmarks');        
-    for(var method in library.functions.getValues()) {            
+  _BenchmarkLibrary._parse(this._library, this._iterations)
+      : _benchmarks = new List<_BenchmarkMethod>() {
+    _logger.fine('parsing library ${_library.qualifiedName} for benchmarks');        
+    for(var method in _library.functions.getValues()) {            
       if(method.isTopLevel) {
         if(method.parameters.length == 0
             && method.returnType is ClassMirror
             && method.returnType.qualifiedName == 'bench.Benchmark') {
           
           _logger.finer("found benchmark method: ${method.simpleName}");
-          benchmarks.add(new _BenchmarkMethod(method));
+          _benchmarks.add(new _BenchmarkMethod(method));
         }
       }
     }
-    _logger.fine('${library.qualifiedName} : ${benchmarks.length} benchmarks');
+    _logger.fine('${_library.qualifiedName} : ${_benchmarks.length} benchmarks');
   }
     
   Future run([int index=0]) {
     var completer = new Completer();
     // TODO: randomize the benchmarks order each iteration?
     _runBenchmarks().then((x) {
-      if(++index == iterations) completer.complete(null);
+      if(++index == _iterations) completer.complete(null);
       else run(index).then((x) => completer.complete(null));
     });
     return completer.future;
@@ -133,9 +132,9 @@ class _BenchmarkLibrary {
   
   Future _runBenchmarks([Iterator it = null]) {
     var completer = new Completer();
-    if(it == null) it = benchmarks.iterator();
+    if(it == null) it = _benchmarks.iterator();
     var benchmark = it.next();
-    benchmark.run(library).then((x) {
+    benchmark.run(_library).then((x) {
       if(!it.hasNext) completer.complete(null);
       else _runBenchmarks(it).then((x) => completer.complete(null));
     });
@@ -153,9 +152,7 @@ class Benchmarker {
   Future run({int iterations:1}) {    
     _initialize(iterations);
     _logger.info('running benchmarks');
-    _runLibraries().then((x) {
-      _report();
-    });
+    _runLibraries().then((x) => _report());
   }
 
   void _addLibrary(LibraryMirror library, int iterations) {    
@@ -167,17 +164,16 @@ class Benchmarker {
     if(!_isInitialized) {
       var mirrors = currentMirrorSystem();
       _logger.info('initializing isolate: ${mirrors.isolate.debugName}');
-      mirrors.libraries.getValues().forEach((library) {
-        _addLibrary(library, iterations);
-      });
+      mirrors.libraries.getValues().forEach((library) 
+          => _addLibrary(library, iterations));
     }
   }
   
   // TODO: provide an API for custom result parsing / reporting
   void _report() {
     _libraries.forEach((library) {
-      library.benchmarks.forEach((benchmark) {
-        var iterations = library.iterations * benchmark._measure;
+      library._benchmarks.forEach((benchmark) {
+        var iterations = library._iterations * benchmark._measure;
         var averageMs = benchmark._stopwatch.elapsedInMs() / iterations;
         _logger.info('${benchmark._method.qualifiedName} : '
             '(${benchmark._stopwatch.elapsedInMs()} ms / '
@@ -190,11 +186,8 @@ class Benchmarker {
     var completer = new Completer();
     if(it == null) it = _libraries.iterator();
     if(!it.hasNext) completer.complete(null);
-    else {
-      it.next().run().then((x) {      
-        _runLibraries(it).then((x) => completer.complete(null));
-      });
-    }
+    else it.next().run().then((x) 
+        => _runLibraries(it).then((x) => completer.complete(null)));
     return completer.future;
   }
 }
