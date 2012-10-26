@@ -40,6 +40,9 @@ class _BenchmarkMethod {
   Future run(LibraryMirror library) {
     var completer = new Completer();
     _setup(library).then((closure) {
+      
+      // TODO: warmup
+      
       _stopwatch.start();
       _runBenchmark(closure).then((x) {
         _stopwatch.stop();
@@ -49,16 +52,13 @@ class _BenchmarkMethod {
     return completer.future;
   }
   
-  Future _runBenchmark(ClosureMirror closure, [int count=0]) {
+  Future _runBenchmark(ClosureMirror closure, [int index=0]) {
     var completer = new Completer();
     closure.apply([]).then((instance) {
       Future advance() {
-        if(++count == _iterations) completer.complete(null);
-        else _runBenchmark(closure, count).then((x) => completer.complete(null));
+        if(++index == _iterations) completer.complete(null);
+        else _runBenchmark(closure, index).then((x) => completer.complete(null));
       }
-      // TODO: add some logging here and some error handling, for example
-      // if the user never completes their Future, what happens?
-      
       // this only works in the current isolate, since reflectee is !simple
       if(_isAsync) instance.reflectee.then((x) => advance());
       else advance();    
@@ -116,12 +116,12 @@ class _BenchmarkLibrary {
     _logger.fine('${library.qualifiedName} : ${benchmarks.length} benchmarks');
   }
     
-  Future run([int count=0]) {
+  Future run([int index=0]) {
     var completer = new Completer();
-    // TODO: randomize the benchmarks order each iteration
+    // TODO: randomize the benchmarks order each iteration?
     _runBenchmarks().then((x) {
-      if(++count == iterations) completer.complete(null);
-      else run(count).then((x) => completer.complete(null));
+      if(++index == iterations) completer.complete(null);
+      else run(index).then((x) => completer.complete(null));
     });
     return completer.future;
   }
@@ -135,7 +135,7 @@ class _BenchmarkLibrary {
       else _runBenchmarks(it).then((x) => completer.complete(null));
     });
     return completer.future;
-  } 
+  }
 }
 
 class Benchmarker {
