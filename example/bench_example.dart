@@ -10,7 +10,7 @@ void main() {
   // Bench logs to a Logger named 'bench'; you may use the logging API to
   // change the log level and add handlers to that logger or the root logger.
   Logger.root.on.record.add((record) => print('${record.message}'));
-  
+    
   // Create and run() a Benchmarker object; this will detect all of the
   // top-level functions in the current isolate which meet the criteria:
   //    - the function must return a Benchmark
@@ -24,8 +24,7 @@ void main() {
 /// see http://en.wikipedia.org/wiki/Pollard's_rho_algorithm
 Benchmark pollardRho() {
   
-  // Perform your setup code in this scope; it will be executed once per
-  // iteration of the entire library.
+  // Perform your setup code in this scope; it will be executed only one time.
   
   int gcd(int a, int b) {
     while(b > 0) {
