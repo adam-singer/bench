@@ -78,7 +78,7 @@ class Benchmarker {
     var completer = new Completer();
     if(it == null) it = _libraries.iterator();
     if(!it.hasNext) completer.complete(null);
-    else it.next().run().then((x) 
+    else it.next()._run().then((x) 
         => _runLibraries(it).then((x) => completer.complete(null)));
     return completer.future;
   }
@@ -114,12 +114,12 @@ class _BenchmarkLibrary {
     _logger.fine('${_library.qualifiedName} : ${_benchmarks.length} benchmarks');
   }
     
-  Future run([int index=0]) {
+  Future _run([int index=0]) {
     var completer = new Completer();
     // TODO: randomize the benchmarks order each iteration?
     _runBenchmarks().then((x) {
       if(++index == _iterations) completer.complete(null);
-      else run(index).then((x) => completer.complete(null));
+      else _run(index).then((x) => completer.complete(null));
     });
     return completer.future;
   }
@@ -128,7 +128,7 @@ class _BenchmarkLibrary {
     var completer = new Completer();
     if(it == null) it = _benchmarks.iterator();
     var benchmark = it.next();
-    benchmark.run(_library).then((x) {
+    benchmark._run(_library).then((x) {
       if(!it.hasNext) completer.complete(null);
       else _runBenchmarks(it).then((x) => completer.complete(null));
     });
@@ -138,6 +138,10 @@ class _BenchmarkLibrary {
 
 /// Internal representation of a benchmark method.
 /// TODO: can we roll this functionality into the [Benchmark] ?
+/// It has mostly the same fields, so we might be able to write a static
+/// method 'Future<Benchmark> _reflect(InstanceMirror)' to build it.
+/// Another benefit of merging it into the public [Benchmark] is that it could
+/// double as the 'result' object (i.e. we can have a getter for elapsedMs)
 class _BenchmarkMethod {
   
   final MethodMirror _method;
@@ -151,7 +155,7 @@ class _BenchmarkMethod {
   _BenchmarkMethod(this._method)
       : _stopwatch = new Stopwatch();
   
-  Future run(LibraryMirror library) {
+  Future _run(LibraryMirror library) {
     var completer = new Completer();
     _setup(library).then((closure) {
       _runBenchmark(closure, _warmup).then((x) {
