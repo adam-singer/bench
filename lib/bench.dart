@@ -82,7 +82,7 @@ class Benchmark {
 /// Represents a library containing one or more [Benchmark]s.
 class BenchmarkLibrary {
   
-  // TODO: should expose a read-only view (Sequence?)
+  // TODO: expose a read-only view
   final List<Benchmark> benchmarks;
   
   String get qualifiedName => _mirror.qualifiedName;
@@ -127,47 +127,63 @@ class BenchmarkLibrary {
   }
 }
 
+/// TODO:
+class BenchmarkResult {
+  final int iterations;
+  // TODO: expose a read-only view
+  final List<BenchmarkLibrary> libraries;
+  BenchmarkResult(this.iterations) : libraries = new List<BenchmarkLibrary>();
+}
+
+typedef void BenchmarkHandler(BenchmarkResult result);
+
+void benchmarkResultLogger(BenchmarkResult result) {
+  result.libraries.forEach((library) {
+    library.benchmarks.forEach((benchmark) {
+      var iterations = result.iterations * benchmark.measure;
+      var averageMs = benchmark._stopwatch.elapsedInMs() / iterations;
+      _logger.info('${benchmark.methodName} : '
+      '(${benchmark._stopwatch.elapsedInMs()} ms / '
+      '${iterations} iterations) = $averageMs');  
+    });
+  });
+}
+
 /// A [Benchmarker] is capable of discovering all of the [Benchmark]s in the
 /// current isolate's [MirrorSystem] and running them in a configurable manner.
 class Benchmarker {
   
-  // TODO: should expose a read-only view (Sequence?)
-  // NO, this should be private and we'll just publich a BenchmarkResult that
-  // contains a Sequence
-  final List<BenchmarkLibrary> libraries;
-  
-  // TODO: remove this field and put it in the BenchmarkResult
-  int _iterations;
-  
   /// Constructs a new [Benchmarker].
-  Benchmarker() : libraries = new List<BenchmarkLibrary>();
+  Benchmarker();
 
   /// Runs all of the [Benchmark]s for a number of global [iterations]; the
   /// [iterations] are a multiplier for all [Benchmark]s in the isolate.
-  Future run({int iterations:1}) {
-    _iterations = iterations;
-
-    // TODO: this method should create a new BenchmarkResult and return it
-    // via the Future<BenchmarkResult> ... so the Benchmarker will be stateless
-    
-    _initialize().then((x) => _run().then((x) => _report()));
+  Future<BenchmarkResult> run({int iterations:1, 
+      BenchmarkHandler handler:benchmarkResultLogger}) {
+    var completer = new Completer<BenchmarkResult>();    
+    var result = new BenchmarkResult(iterations);
+    _initialize(result).then((result) {
+      _run(result).then((result) {
+        if(handler != null) handler(result);
+        completer.complete(result);
+      });
+    });
+    return completer.future;
   }
    
-  Future _initialize() {
+  Future<BenchmarkResult> _initialize(BenchmarkResult result) {
     var completer = new Completer();
-    if(_isInitialized) completer.complete(null);      
-    else {
-      var mirrors = currentMirrorSystem();
-      _logger.info('initializing isolate: ${mirrors.isolate.debugName}');      
-      _initializeLibraries(mirrors.libraries.getValues().iterator()).then((x) {
-        _isInitialized = true;
-        completer.complete(null);
-      });
-    }
+    var mirrors = currentMirrorSystem();
+    _logger.info('initializing isolate: ${mirrors.isolate.debugName}');      
+    _initializeLibraries(mirrors.libraries.getValues().iterator(), 
+        result.libraries).then((x) {
+          completer.complete(result);
+        });
     return completer.future;
   }
   
-  Future _initializeLibraries(Iterator<LibraryMirror> it) {
+  Future _initializeLibraries(Iterator<LibraryMirror> it, 
+                              List<BenchmarkLibrary> libraries) {    
     var completer = new Completer();
     if(!it.hasNext) completer.complete(null);
     else {
@@ -176,24 +192,23 @@ class Benchmarker {
         _logger.fine('${library.qualifiedName} : found '
             '${library.benchmarks.length} benchmarks');        
         if(library.benchmarks.length > 0) libraries.add(library);        
-        _initializeLibraries(it).then((x) => completer.complete(null));
+        _initializeLibraries(it, libraries).then((x) => completer.complete(null));
       });
     }
     return completer.future;
   }
   
-  Future _run([int index=0]) {
+  Future<BenchmarkResult> _run(BenchmarkResult result, [int index=0]) {
     var completer = new Completer();
-    _runLibraries().then((x) {
-      if(++index == _iterations) completer.complete(null);
-      else _run(index).then((x) => completer.complete(null));
+    _runLibraries(result.libraries.iterator()).then((x) {
+      if(++index == result.iterations) completer.complete(result);
+      else _run(result, index).then((x) => completer.complete(result));
     });
     return completer.future;
   }
   
-  Future _runLibraries([Iterator<BenchmarkLibrary> it = null]) {
+  Future _runLibraries(Iterator<BenchmarkLibrary> it) {
     var completer = new Completer();
-    if(it == null) it = libraries.iterator();
     if(!it.hasNext) completer.complete(null);
     else {
       var library = it.next();
@@ -202,18 +217,5 @@ class Benchmarker {
           => _runLibraries(it).then((x) => completer.complete(null)));
     }   
     return completer.future;
-  }
-  
-  // TODO: provide an API for custom result parsing / reporting?
-  void _report() {
-    libraries.forEach((library) {
-      library.benchmarks.forEach((benchmark) {
-        var iterations = _iterations * benchmark.measure;
-        var averageMs = benchmark._stopwatch.elapsedInMs() / iterations;
-        _logger.info('${benchmark.methodName} : '
-            '(${benchmark._stopwatch.elapsedInMs()} ms / '
-            '${iterations} iterations) = $averageMs');  
-      });
-    });
   }
 }
