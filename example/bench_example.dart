@@ -41,15 +41,13 @@ Benchmark pollardRho() {
   
   return new Benchmark(() {
     rho(n);
-  }, iterations:2, description:"Pollard's rho algorithm for n: ${n}");
+  }, warmup:1, measure:2, description:"Pollard's rho algorithm for n: ${n}");
 }
 
 Benchmark timer() => new Benchmark.async(Future async() {
   var completer = new Completer();
   
-  new Timer(1500, (t) {
-    completer.complete(null);
-  });
+  new Timer(1500, (t) => completer.complete(null));
   
   return completer.future;
-}, iterations:10, description:"Asynchronous 1.5 second timer");
+}, warmup:5, measure:5, description:"Asynchronous 1.5 second timer");

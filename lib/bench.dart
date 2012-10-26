@@ -15,13 +15,14 @@ Logger _logger = new Logger('bench');
 class Benchmark {  
   final Function method;
   final String description;
-  final int iterations;
+  final int measure;
+  final int warmup;
   
-  Benchmark(void method(), {this.description:"", this.iterations:100})
-      : method = method;
+  Benchmark(void method(), {this.description:"", this.measure:100, 
+      this.warmup:200}) : method = method;
   
-  Benchmark.async(Future method(), {this.description:"", this.iterations:100})
-      : method = method;
+  Benchmark.async(Future method(), {this.description:"", this.measure:100, 
+      this.warmup:200}) : method = method;
 }
 
 /// Internal representation of a benchmark method.
@@ -30,8 +31,9 @@ class _BenchmarkMethod {
   final MethodMirror _method;
   final Stopwatch _stopwatch;
   
-  String _description; // TODO: use annotation once available
-  int _iterations; // TODO: use annotation once available  
+  String _description;
+  int _measure;
+  int _warmup;
   bool _isAsync;
   
   _BenchmarkMethod(this._method)
@@ -40,24 +42,24 @@ class _BenchmarkMethod {
   Future run(LibraryMirror library) {
     var completer = new Completer();
     _setup(library).then((closure) {
-      
-      // TODO: warmup
-      
-      _stopwatch.start();
-      _runBenchmark(closure).then((x) {
-        _stopwatch.stop();
-        completer.complete(null);
+      _runBenchmark(closure, _warmup).then((x) {
+        _stopwatch.start();
+        _runBenchmark(closure, _measure).then((x) {
+          _stopwatch.stop();
+          completer.complete(null);
+        });
       });
     });
     return completer.future;
   }
   
-  Future _runBenchmark(ClosureMirror closure, [int index=0]) {
+  Future _runBenchmark(ClosureMirror closure, int count, [int index=0]) {
     var completer = new Completer();
     closure.apply([]).then((instance) {
       Future advance() {
-        if(++index == _iterations) completer.complete(null);
-        else _runBenchmark(closure, index).then((x) => completer.complete(null));
+        if(++index == count) completer.complete(null);
+        else _runBenchmark(closure, count, index).then((x) 
+            => completer.complete(null));
       }
       // this only works in the current isolate, since reflectee is !simple
       if(_isAsync) instance.reflectee.then((x) => advance());
@@ -71,13 +73,16 @@ class _BenchmarkMethod {
     library.invoke(_method.simpleName, []).then((benchmark) {
       benchmark.getField('description').then((instance) {
         _description = instance.reflectee;
-        benchmark.getField('iterations').then((instance) {
-          _iterations = instance.reflectee;
-          benchmark.getField('method').then((instance) {
-            ClosureMirror closure = instance;
-            // TODO: if returnType is 'dynamic' this is ambiguous
-            _isAsync = closure.function.returnType.simpleName == 'Future';            
-            completer.complete(closure);
+        benchmark.getField('measure').then((instance) {
+          _measure = instance.reflectee;
+          benchmark.getField('warmup').then((instance) {
+            _warmup = instance.reflectee;
+            benchmark.getField('method').then((instance) {
+              ClosureMirror closure = instance;
+              // TODO: if returnType is 'dynamic' this is ambiguous
+              _isAsync = closure.function.returnType.simpleName == 'Future';            
+              completer.complete(closure);
+            });
           });
         });
       });
@@ -172,7 +177,7 @@ class Benchmarker {
   void _report() {
     _libraries.forEach((library) {
       library.benchmarks.forEach((benchmark) {
-        var iterations = library.iterations * benchmark._iterations;
+        var iterations = library.iterations * benchmark._measure;
         var averageMs = benchmark._stopwatch.elapsedInMs() / iterations;
         _logger.info('${benchmark._method.qualifiedName} : '
             '(${benchmark._stopwatch.elapsedInMs()} ms / '
