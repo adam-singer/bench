@@ -7,10 +7,7 @@ import 'package:logging/logging.dart';
 
 Logger _logger = new Logger('bench');
 
-/**
- * Metadata to describe a [Benchmark].  
- * This will likely be replaced by annotations once mirrors support them.
- */
+/// Representation of a [Benchmark].
 class Benchmark {
   
   /// Gets the [Function] to invoke each iteration of the [Benchmark].
@@ -140,6 +137,7 @@ class _BenchmarkLibrary {
 }
 
 /// Internal representation of a benchmark method.
+/// TODO: can we roll this functionality into the [Benchmark] ?
 class _BenchmarkMethod {
   
   final MethodMirror _method;
