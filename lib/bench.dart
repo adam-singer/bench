@@ -145,7 +145,7 @@ class _BenchmarkLibrary {
 /// It has mostly the same fields, so we might be able to write a static
 /// method 'Future<Benchmark> _reflect(InstanceMirror)' to build it.
 /// Another benefit of merging it into the public [Benchmark] is that it could
-/// double as the 'result' object (i.e. we can have a getter for elapsedMs)
+/// double as the 'result' object (i.e. we can have a getter for elapsedMs/Us)
 class _BenchmarkMethod {
   
   final MethodMirror _method;
