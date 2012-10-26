@@ -55,8 +55,8 @@ Benchmark pollardRho() {
   // need in order to perform your benchmark.
   return new Benchmark(
       () => rho(n), // The function that will be called for each iteration
-      warmup:1, // The number of warmup iterations that you want   
-      measure:2, // The number of measured iterations that you want
+      warmup:4, // The number of warmup iterations that you want   
+      measure:1, // The number of measured iterations that you want
       description:"Pollard's rho algorithm for n: ${n}"); // A description
 }
 
@@ -73,4 +73,4 @@ Benchmark timer() => new Benchmark.async(
   new Timer(1500, (t) => completer.complete(null));
   
   return completer.future;
-}, warmup:5, measure:5, description:"Asynchronous 1.5 second timer");
+}, warmup:6, measure:4, description:"Asynchronous 1.5 second timer");
