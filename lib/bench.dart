@@ -33,15 +33,19 @@ class Benchmark {
       this.warmup:200}) : method = method;
 }
 
-/// TODO:
+/// A [Benchmarker] is capable of discovering all of the [Benchmark]s in the
+/// current isolate's [MirrorSystem] and running them in a configurable manner.
 class Benchmarker {
   
   final List<_BenchmarkLibrary> _libraries;
   bool _isInitialized = false;
   
+  /// Constructs a new [Benchmarker].
   Benchmarker() : _libraries = new List<_BenchmarkLibrary>();
-        
-  Future run({int iterations:1}) {    
+
+  /// Runs all of the [Benchmark]s for a number of global [iterations]; the
+  /// [iterations] are a multiplier for all [Benchmark]s in the isolate.
+  Future run({int iterations:1}) {
     _initialize(iterations);
     _logger.info('running benchmarks');
     _runLibraries().then((x) => _report());
