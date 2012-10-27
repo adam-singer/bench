@@ -166,8 +166,10 @@ class Benchmarker {
   /// Constructs a new [Benchmarker].
   Benchmarker();
 
-  /// Runs all of the [Benchmark]s for a number of global [iterations]; the
-  /// [iterations] are a multiplier for all [Benchmark]s in the isolate.
+  /// Runs all of the [Benchmark] functions in the current isolate's 
+  /// [MirrorSystem] for the configurable number of global [iterations] and 
+  /// reports the [BenchmarkResult] to the configured [BenchmarkHandler] in 
+  /// addition to returning the same [BenchmarkResult] as a [Future].
   Future<BenchmarkResult> run({int iterations:1, 
       BenchmarkHandler handler:benchmarkResultLogger}) {
     var completer = new Completer<BenchmarkResult>();    
