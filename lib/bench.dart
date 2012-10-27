@@ -175,6 +175,7 @@ class Benchmarker {
     var completer = new Completer<BenchmarkResult>();    
     var result = new BenchmarkResult._(iterations);
     _initialize(result).then((result) {
+      _logger.info('running benchmarks...');
       _run(result).then((result) {
         if(handler != null) handler(result);
         completer.complete(result);
