@@ -104,8 +104,9 @@ class BenchmarkLibrary {
           && method.parameters.length == 0
           && method.returnType is ClassMirror
           && method.returnType.qualifiedName == 'bench.Benchmark') {          
-        _logger.finer("found benchmark method: ${method.simpleName}");          
-        _mirror.invoke(method.simpleName, []).then((instance) {            
+        _logger.finer("found benchmark method: ${method.simpleName}");    
+        // invoking the method mirror performs the setup phase of the benchmark
+        _mirror.invoke(method.simpleName, []).then((instance) {
           // this only works in the current isolate as it is! simple
           Benchmark benchmark = instance.reflectee;
           benchmark._mirror = method;
