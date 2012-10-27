@@ -31,8 +31,10 @@ class Benchmark {
   /// Gets the qualified name of the [method] if available.
   String get methodName => (_mirror == null) ? "" : _mirror.qualifiedName;
   
-  final Stopwatch _stopwatch;  
-  final bool _isAsync;  
+  /// Gets whether or not this [Benchmark] is asynchronous.
+  final bool isAsync;
+  
+  final Stopwatch _stopwatch;    
   MethodMirror _mirror;
   
   /// Constructs a new [Benchmark] with the given synchronous [method] and
@@ -40,16 +42,16 @@ class Benchmark {
   Benchmark(void method(), {this.description:"", this.measure:100, 
       this.warmup:200}) 
       : method = method
-      , _stopwatch = new Stopwatch()
-      , _isAsync = false;
+      , isAsync = false
+      , _stopwatch = new Stopwatch();
   
   /// Constructs a new [Benchmark] with the given asynchronous [method] and
   /// the optional [descripton], [measure] count, and [warmup] count.
   Benchmark.async(Future method(), {this.description:"", this.measure:100, 
       this.warmup:200}) 
       : method = method
-      , _stopwatch = new Stopwatch()
-      , _isAsync = true;
+      , isAsync = true
+      , _stopwatch = new Stopwatch();
   
   Future _iterate(int count, [int index=0]) {
     var completer = new Completer();    
@@ -57,7 +59,7 @@ class Benchmark {
       if(++index == count) completer.complete(null);
       else _iterate(count, index).then((x) => completer.complete(null));
     }    
-    if(_isAsync) {
+    if(isAsync) {
       method().then((x) => advance());
     } else {
       method();
@@ -82,9 +84,10 @@ class Benchmark {
 /// Represents a library containing one or more [Benchmark]s.
 class BenchmarkLibrary {
   
-  // TODO: expose a read-only view
-  final List<Benchmark> benchmarks;
+  /// Gets the list of [Benchmark]s in the library.
+  final List<Benchmark> benchmarks; // TODO: expose a read-only view
   
+  /// Gets the qualified name of the library.
   String get qualifiedName => _mirror.qualifiedName;
   
   final LibraryMirror _mirror;
@@ -127,16 +130,22 @@ class BenchmarkLibrary {
   }
 }
 
-/// TODO:
+/// Represents the result of one run of a [Benchmarker].
 class BenchmarkResult {
+  
+  /// Gets the number of global iterations for the run result.
   final int iterations;
-  // TODO: expose a read-only view
-  final List<BenchmarkLibrary> libraries;
-  BenchmarkResult(this.iterations) : libraries = new List<BenchmarkLibrary>();
+  
+  /// Gets the list of libraries containing benchmarks for the run result.
+  final List<BenchmarkLibrary> libraries; // TODO: expose a read-only view
+  
+  BenchmarkResult._(this.iterations) : libraries = new List<BenchmarkLibrary>();
 }
 
+/// A [BenchmarkHandler] function to process a given benchmark [result].
 typedef void BenchmarkHandler(BenchmarkResult result);
 
+/// A [BenchmarkHandler] function that logs the [result] to bench's logger.
 void benchmarkResultLogger(BenchmarkResult result) {
   result.libraries.forEach((library) {
     library.benchmarks.forEach((benchmark) {
@@ -161,7 +170,7 @@ class Benchmarker {
   Future<BenchmarkResult> run({int iterations:1, 
       BenchmarkHandler handler:benchmarkResultLogger}) {
     var completer = new Completer<BenchmarkResult>();    
-    var result = new BenchmarkResult(iterations);
+    var result = new BenchmarkResult._(iterations);
     _initialize(result).then((result) {
       _run(result).then((result) {
         if(handler != null) handler(result);
