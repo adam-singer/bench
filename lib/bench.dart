@@ -14,10 +14,10 @@ class Benchmark {
   final String description;
   
   /// Gets the elapsed time in milliseconds over all measured iterations.
-  int get elapsedMilliseconds => _stopwatch.elapsedInMs();
+  int get elapsedMilliseconds => _stopwatch.elapsedMilliseconds;
   
   /// Gets the elapsed time in microseconds over all measured iterations.
-  int get elapsedMicroseconds => _stopwatch.elapsedInUs();
+  int get elapsedMicroseconds => _stopwatch.elapsedMicroseconds;
   
   /// Gets whether or not this [Benchmark] is asynchronous.
   final bool isAsync;
@@ -96,7 +96,7 @@ class BenchmarkLibrary {
   
   Future _initialize([Iterator<MethodMirror> it = null]) {
     var completer = new Completer();
-    if(it == null) it = _mirror.functions.getValues().iterator();
+    if(it == null) it = _mirror.functions.values.iterator();
     if(!it.hasNext) completer.complete(null);
     else {
       var method = it.next();
@@ -151,9 +151,9 @@ void benchmarkResultLogger(BenchmarkResult result) {
   result.libraries.forEach((library) {
     library.benchmarks.forEach((benchmark) {
       var iterations = result.iterations * benchmark.measure;
-      var averageMs = benchmark._stopwatch.elapsedInMs() / iterations;
+      var averageMs = benchmark.elapsedMilliseconds / iterations;
       _logger.info('${benchmark.methodName} : '
-      '(${benchmark._stopwatch.elapsedInMs()} ms / '
+      '(${benchmark.elapsedMilliseconds} ms / '
       '${iterations} iterations) = $averageMs');  
     });
   });
@@ -188,7 +188,7 @@ class Benchmarker {
     var completer = new Completer();
     var mirrors = currentMirrorSystem();
     _logger.info('initializing isolate: ${mirrors.isolate.debugName}');      
-    _initializeLibraries(mirrors.libraries.getValues().iterator(), 
+    _initializeLibraries(mirrors.libraries.values.iterator(), 
         result.libraries).then((x) {
           completer.complete(result);
         });
