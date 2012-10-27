@@ -9,18 +9,9 @@ Logger _logger = new Logger('bench');
 
 /// Representation of a [Benchmark].
 class Benchmark {
-    
-  /// Gets the [Function] to invoke each iteration of the [Benchmark].
-  final Function method;
   
   /// Gets a description of the [Benchmark].
   final String description;
-  
-  /// Gets the number of measured iterations to execute for the [Benchmark].
-  final int measure;
-  
-  /// Gets the number of warmup iterations to execute for the [Benchmark].
-  final int warmup;
   
   /// Gets the elapsed time in milliseconds over all measured iterations.
   int get elapsedMilliseconds => _stopwatch.elapsedInMs();
@@ -28,11 +19,20 @@ class Benchmark {
   /// Gets the elapsed time in microseconds over all measured iterations.
   int get elapsedMicroseconds => _stopwatch.elapsedInUs();
   
+  /// Gets whether or not this [Benchmark] is asynchronous.
+  final bool isAsync;
+  
+  /// Gets the number of measured iterations to execute for the [Benchmark].
+  final int measure;
+  
+  /// Gets the [Function] to invoke each iteration of the [Benchmark].
+  final Function method;
+  
   /// Gets the qualified name of the [method] if available.
   String get methodName => (_mirror == null) ? "" : _mirror.qualifiedName;
   
-  /// Gets whether or not this [Benchmark] is asynchronous.
-  final bool isAsync;
+  /// Gets the number of warmup iterations to execute for the [Benchmark].
+  final int warmup;
   
   final Stopwatch _stopwatch;    
   MethodMirror _mirror;
@@ -92,7 +92,7 @@ class BenchmarkLibrary {
   
   final LibraryMirror _mirror;
   
-  BenchmarkLibrary(this._mirror) : benchmarks = new List<Benchmark>();
+  BenchmarkLibrary._(this._mirror) : benchmarks = new List<Benchmark>();
   
   Future _initialize([Iterator<MethodMirror> it = null]) {
     var completer = new Completer();
@@ -196,7 +196,7 @@ class Benchmarker {
     var completer = new Completer();
     if(!it.hasNext) completer.complete(null);
     else {
-      var library = new BenchmarkLibrary(it.next());
+      var library = new BenchmarkLibrary._(it.next());
       library._initialize().then((x) {        
         _logger.fine('${library.qualifiedName} : found '
             '${library.benchmarks.length} benchmarks');        
