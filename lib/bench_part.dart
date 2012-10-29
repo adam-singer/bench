@@ -33,24 +33,18 @@ class Benchmark {
   
   /// Constructs a new [Benchmark] with the given synchronous [method] and
   /// the optional [description], [measure] count, and [warmup] count.
-  Benchmark(void method(), {this.description:"", this.measure:100, 
-      this.warmup:200}) 
-      : method = method
-      , isAsync = false
-      , _stopwatch = new Stopwatch() {
-    if(warmup < 0) throw const ArgumentError("warmup must be non-negative");
-    if(measure <= 0) throw const ArgumentError("measure must be positive");
-  }
+  Benchmark(void method(), {description:"", measure:100, warmup:200}) 
+      : this._(method, description, measure, warmup, false);
   
   /// Constructs a new [Benchmark] with the given asynchronous [method] and
   /// the optional [descripton], [measure] count, and [warmup] count.
-  Benchmark.async(Future method(), {this.description:"", this.measure:100, 
-      this.warmup:200}) 
-      : method = method
-      , isAsync = true
-      , _stopwatch = new Stopwatch() {
+  Benchmark.async(Future method(), {description:"", measure:100, warmup:200}) 
+      : this._(method, description, measure, warmup, true);
+      
+  Benchmark._(this.method, this.description, this.measure, this.warmup, 
+      this.isAsync) : _stopwatch = new Stopwatch() {
     if(warmup < 0) throw const ArgumentError("warmup must be non-negative");
-    if(measure <= 0) throw const ArgumentError("measure must be positive");
+    if(measure <= 0) throw const ArgumentError("measure must be positive");     
   }
   
   Future _iterate(int count, [int index=0]) {
