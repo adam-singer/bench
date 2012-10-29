@@ -64,7 +64,7 @@ Benchmark pollardRho() {
 /// This is an example of an asynchronous Benchmark without any setup
 /// Notice that we are using the [Benchmark.async] constructor to indicate this.
 Benchmark timer() => new Benchmark.async(
-    // The function for asynchronous benchmarks returns a Future
+    // The function for asynchronous benchmarks must return a Future
     Future async() {
       
   var completer = new Completer();
