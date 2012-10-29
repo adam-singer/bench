@@ -1,6 +1,7 @@
 
 library bench_test;
 
+import 'dart:isolate';
 import 'package:unittest/unittest.dart';
 
 part '../lib/bench_part.dart';
@@ -17,6 +18,7 @@ void testBench() {
     test('testBenchmarkConstructorNegativeWarmupThrows', testBenchmarkConstructorNegativeWarmupThrows);
     test('testBenchmarkAsyncConstructorNoFutureThrows', testBenchmarkAsyncConstructorNoFutureThrows);
     test('testBenchmarkNoWarmupOneMeasure', testBenchmarkNoWarmupOneMeasure);
+    test('testBenchmarkAsyncNoWarmupOneMeasure', testBenchmarkAsyncNoWarmupOneMeasure);
   });
 }
 
@@ -29,6 +31,8 @@ void testBenchmarkConstructor() {
   expect(benchmark.measure, equals(7));
   expect(benchmark.description, equals('snarf'));
   expect(benchmark.isAsync, isFalse);  
+  expect(benchmark.elapsedMilliseconds, isZero);
+  expect(benchmark.elapsedMicroseconds, isZero);
 }
 
 void testBenchmarkAsyncConstructor() {
@@ -39,7 +43,9 @@ void testBenchmarkAsyncConstructor() {
   expect(benchmark.warmup, equals(42));
   expect(benchmark.measure, equals(7));
   expect(benchmark.description, equals('async_snarf'));
-  expect(benchmark.isAsync, isTrue);  
+  expect(benchmark.isAsync, isTrue);
+  expect(benchmark.elapsedMilliseconds, isZero);
+  expect(benchmark.elapsedMicroseconds, isZero);
 }
 
 void testBenchmarkConstructorZeroMeasureThrows() {
@@ -57,7 +63,7 @@ void testBenchmarkAsyncConstructorNoFutureThrows() {
 }
 
 void testBenchmarkNoWarmupOneMeasure() {
-  int count = 0;
+  int count = 0;  
   
   var benchmark = new Benchmark(() {    
     count++;
@@ -65,5 +71,24 @@ void testBenchmarkNoWarmupOneMeasure() {
   
   benchmark._run().then(expectAsync1((ignore) {
     expect(count, equals(1));
+  }));
+}
+
+void testBenchmarkAsyncNoWarmupOneMeasure() {
+  int count = 0;  
+  
+  var benchmark = new Benchmark.async(() {    
+    var completer = new Completer();
+    new Timer(50, (t) {
+      count++;
+      completer.complete(null);
+    });
+    return completer.future;    
+  }, warmup:0, measure:1);
+  
+  benchmark._run().then(expectAsync1((ignore) {
+    expect(count, equals(1));
+    expect(benchmark.elapsedMilliseconds, greaterThan(49));
+    expect(benchmark.elapsedMicroseconds, greaterThan(49999));
   }));
 }
