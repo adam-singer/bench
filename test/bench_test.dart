@@ -15,6 +15,7 @@ void testBench() {
     test('testBenchmarkAsyncConstructor', testBenchmarkAsyncConstructor);
     test('testBenchmarkConstructorZeroMeasureThrows', testBenchmarkConstructorZeroMeasureThrows);
     test('testBenchmarkConstructorNegativeWarmupThrows', testBenchmarkConstructorNegativeWarmupThrows);
+    test('testBenchmarkAsyncConstructorNoFutureThrows', testBenchmarkAsyncConstructorNoFutureThrows);
     test('testBenchmarkNoWarmupOneMeasure', testBenchmarkNoWarmupOneMeasure);
   });
 }
@@ -31,9 +32,7 @@ void testBenchmarkConstructor() {
 }
 
 void testBenchmarkAsyncConstructor() {
-  // TODO: we don't get any warning / error if the method signature doesn't
-  // return a Future - use a typedef for the argument?
-  var method = () {};
+  var method = Future async() {};
   var benchmark = new Benchmark.async(method, warmup:42, measure:7, 
       description:'async_snarf');
   expect(benchmark.method, same(method));
@@ -51,6 +50,10 @@ void testBenchmarkConstructorZeroMeasureThrows() {
 void testBenchmarkConstructorNegativeWarmupThrows() {
   expect(() => new Benchmark((){}, warmup:-1, measure:6), 
       throwsA(const isInstanceOf<ArgumentError>()));
+}
+
+void testBenchmarkAsyncConstructorNoFutureThrows() {
+  expect(() => new Benchmark.async(void sync() {}), throws);
 }
 
 void testBenchmarkNoWarmupOneMeasure() {
