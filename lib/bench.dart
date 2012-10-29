@@ -6,5 +6,3 @@ import 'dart:mirrors';
 import 'package:logging/logging.dart';
 
 part 'bench_part.dart';
-
-Logger _logger = new Logger('bench');

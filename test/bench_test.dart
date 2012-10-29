@@ -2,7 +2,6 @@
 library bench_test;
 
 import 'package:unittest/unittest.dart';
-import 'package:bench/bench.dart';
 
 part '../lib/bench_part.dart';
 
@@ -36,11 +35,11 @@ void testBenchmarkAsyncConstructor() {
   // return a Future - use a typedef for the argument?
   var method = () {};
   var benchmark = new Benchmark.async(method, warmup:42, measure:7, 
-      description:'asyncsnarf');
+      description:'async_snarf');
   expect(benchmark.method, same(method));
   expect(benchmark.warmup, equals(42));
   expect(benchmark.measure, equals(7));
-  expect(benchmark.description, equals('asyncsnarf'));
+  expect(benchmark.description, equals('async_snarf'));
   expect(benchmark.isAsync, isTrue);  
 }
 
