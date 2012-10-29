@@ -19,6 +19,8 @@ void testBench() {
     test('testBenchmarkAsyncConstructorNoFutureThrows', testBenchmarkAsyncConstructorNoFutureThrows);
     test('testBenchmarkNoWarmupOneMeasure', testBenchmarkNoWarmupOneMeasure);
     test('testBenchmarkAsyncNoWarmupOneMeasure', testBenchmarkAsyncNoWarmupOneMeasure);
+    test('testBenchmarkSeveralIterations', testBenchmarkSeveralIterations);
+    test('testBenchmarkAsyncSeveralIterations', testBenchmarkAsyncSeveralIterations);
   });
 }
 
@@ -65,9 +67,7 @@ void testBenchmarkAsyncConstructorNoFutureThrows() {
 void testBenchmarkNoWarmupOneMeasure() {
   int count = 0;  
   
-  var benchmark = new Benchmark(() {    
-    count++;
-  }, warmup:0, measure:1);
+  var benchmark = new Benchmark(() => ++count, warmup:0, measure:1);
   
   benchmark._run().then(expectAsync1((ignore) {
     expect(count, equals(1));
@@ -90,5 +90,36 @@ void testBenchmarkAsyncNoWarmupOneMeasure() {
     expect(count, equals(1));
     expect(benchmark.elapsedMilliseconds, greaterThan(49));
     expect(benchmark.elapsedMicroseconds, greaterThan(49999));
+  }));
+}
+
+void testBenchmarkSeveralIterations() {
+  int count = 0;  
+  
+  var benchmark = new Benchmark(() => ++count, warmup:42, measure:24);
+  
+  benchmark._run().then(expectAsync1((ignore) {
+    expect(count, equals(66));
+  }));
+}
+
+void testBenchmarkAsyncSeveralIterations() {
+  int count = 0;  
+  
+  var benchmark = new Benchmark.async(() {    
+    var completer = new Completer();
+    new Timer(50, (t) {
+      count++;
+      completer.complete(null);
+    });
+    return completer.future;    
+  }, warmup:6, measure:4);
+  
+  benchmark._run().then(expectAsync1((ignore) {
+    expect(count, equals(10));
+    expect(benchmark.elapsedMilliseconds, greaterThan(199));
+    expect(benchmark.elapsedMilliseconds, lessThan(201));
+    expect(benchmark.elapsedMicroseconds, greaterThan(199999));
+    expect(benchmark.elapsedMilliseconds, lessThan(201000));
   }));
 }
