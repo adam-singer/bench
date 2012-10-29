@@ -16,7 +16,9 @@ void main() {
   //    - the function must return a Benchmark
   //    - the function must have no arguments
   // You may optionally pass a number of global iterations to run for all
-  // benchmark functions in the isolate.
+  // benchmark functions in the isolate.  You may also optionally parse the
+  // result by passing a handler function or receiving the value of the
+  // returned Future.  The default handler logs the result to bench's logger.
   new Benchmarker().run();
 }
 
