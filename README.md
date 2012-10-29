@@ -1,4 +1,4 @@
-bench
+Bench
 =====
 
 A micro benchmark library for [dart](http://www.dartlang.org/).
