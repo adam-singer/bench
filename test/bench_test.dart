@@ -4,7 +4,7 @@ library bench_test;
 import 'dart:isolate';
 import 'package:unittest/unittest.dart';
 
-part '../lib/bench_part.dart';
+part 'package:bench/src/bench_part.dart';
 
 void main() {
   testBench();
@@ -118,8 +118,6 @@ void testBenchmarkAsyncSeveralIterations() {
   benchmark._run().then(expectAsync1((ignore) {
     expect(count, equals(10));
     expect(benchmark.elapsedMilliseconds, greaterThan(199));
-    expect(benchmark.elapsedMilliseconds, lessThan(201));
     expect(benchmark.elapsedMicroseconds, greaterThan(199999));
-    expect(benchmark.elapsedMilliseconds, lessThan(201000));
   }));
 }

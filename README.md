@@ -13,7 +13,7 @@ Benchmarking for Dart
 There has been a fair amount of [discussion]
 (https://groups.google.com/a/dartlang.org/group/misc/) lately regarding 
 [benchmarking of code on the Dart VM]
-(http://www.dartlang.org/articles/benchmarking/).  Bench was written with
+(http://www.dartlang.org/articles/benchmarking/).  Bench is being written with
 the goal of making it easy to quickly write reliable benchmark functions for
 the Dart VM.
 

@@ -5,4 +5,4 @@ library bench;
 import 'dart:mirrors';
 import 'package:logging/logging.dart';
 
-part 'bench_part.dart';
+part 'src/bench_part.dart';
