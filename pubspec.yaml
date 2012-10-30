@@ -1,7 +1,7 @@
 name: bench
 version: 0.0.3
 description: a micro benchmark library for dart
-author: Ross Smith
+author: Ross Smith <ross.m.smith@gmail.com>
 homepage: https://github.com/rmsmith/bench
 dependencies:
   logging:
