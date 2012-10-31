@@ -2,6 +2,7 @@
 library bench_test;
 
 import 'dart:isolate';
+import 'dart:mirrors';
 import 'package:unittest/unittest.dart';
 
 part 'package:bench/src/bench_part.dart';
@@ -21,8 +22,14 @@ void testBench() {
     test('testBenchmarkAsyncNoWarmupOneMeasure', testBenchmarkAsyncNoWarmupOneMeasure);
     test('testBenchmarkSeveralIterations', testBenchmarkSeveralIterations);
     test('testBenchmarkAsyncSeveralIterations', testBenchmarkAsyncSeveralIterations);
+    test('testBenchmarkLibraryConstructor', testBenchmarkLibraryConstructor);
+    test('testBenchmarkLibraryInitializeNoBenchmark', testBenchmarkLibraryInitializeNoBenchmark);
+    test('testBenchmarkLibraryInitializeSingleBenchmark', testBenchmarkLibraryInitializeSingleBenchmark);
   });
 }
+
+class MockLibraryMirror extends Mock implements LibraryMirror {}
+class MockMethodMirror extends Mock implements MethodMirror {}
 
 void testBenchmarkConstructor() {
   var method = () {};
@@ -120,4 +127,22 @@ void testBenchmarkAsyncSeveralIterations() {
     expect(benchmark.elapsedMilliseconds, greaterThan(199));
     expect(benchmark.elapsedMicroseconds, greaterThan(199999));
   }));
+}
+
+void testBenchmarkLibraryConstructor() {  
+  LibraryMirror mockLibraryMirror = new MockLibraryMirror();
+  mockLibraryMirror.when(callsTo(mockLibraryMirror.qualifiedName()))
+      .alwaysReturn('snarf');
+  var library = new BenchmarkLibrary._(mockLibraryMirror);
+  expect(library._mirror, equals(mockLibraryMirror));
+  expect(library.benchmarks, isEmpty);
+  expect(library.qualifiedName, equals('snarf'));  
+}
+
+void testBenchmarkLibraryInitializeNoBenchmark() {
+  // TODO:
+}
+
+void testBenchmarkLibraryInitializeSingleBenchmark() {
+  // TODO:
 }
