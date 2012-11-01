@@ -184,7 +184,11 @@ class Benchmarker {
   Future<BenchmarkResult> _initialize(BenchmarkResult result) {
     var completer = new Completer();
     var mirrors = currentMirrorSystem();
-    _logger.info('initializing isolate: ${mirrors.isolate.debugName}');      
+    _logger.info('initializing isolate: ${mirrors.isolate.debugName}');     
+    
+    // TODO: suport a user-defined 'bool filter(LibraryMirror lm)' predicate
+    // which we would apply to mirrors.libraries before we iterate on the result
+    
     _initializeLibraries(mirrors.libraries.values.iterator(), 
         result.libraries).then((x) {
           completer.complete(result);
@@ -196,7 +200,7 @@ class Benchmarker {
                               List<BenchmarkLibrary> libraries) {    
     var completer = new Completer();
     if(!it.hasNext) completer.complete(null);
-    else {
+    else {      
       var library = new BenchmarkLibrary._(it.next());
       library._initialize().then((x) {        
         _logger.fine('${library.qualifiedName} : found '
