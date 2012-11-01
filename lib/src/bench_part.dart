@@ -1,4 +1,6 @@
 
+part of bench;
+
 Logger _logger = new Logger('bench');
 
 /// Representation of a [Benchmark].

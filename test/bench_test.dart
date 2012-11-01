@@ -28,6 +28,7 @@ void testBench() {
   });
 }
 
+class MockClassMirror extends Mock implements ClassMirror {}
 class MockLibraryMirror extends Mock implements LibraryMirror {}
 class MockMethodMirror extends Mock implements MethodMirror {}
 
@@ -130,7 +131,7 @@ void testBenchmarkAsyncSeveralIterations() {
 }
 
 void testBenchmarkLibraryConstructor() {  
-  LibraryMirror mockLibraryMirror = new MockLibraryMirror();
+  var mockLibraryMirror = new MockLibraryMirror();
   mockLibraryMirror.when(callsTo(mockLibraryMirror.qualifiedName()))
       .alwaysReturn('snarf');
   var library = new BenchmarkLibrary._(mockLibraryMirror);
@@ -140,7 +141,34 @@ void testBenchmarkLibraryConstructor() {
 }
 
 void testBenchmarkLibraryInitializeNoBenchmark() {
-  // TODO:
+    
+  var mockReturnType = new MockClassMirror();
+  mockReturnType.when(callsTo(mockReturnType.qualifiedName()))
+      .alwaysReturn('bench.Benchmark_NOT');
+  
+  var mockMethod = new MockMethodMirror();
+  mockMethod.when(callsTo(mockMethod.isTopLevel()))
+      .alwaysReturn(true);
+  mockMethod.when(callsTo(mockMethod.parameters()))
+      .alwaysReturn([]);
+  mockMethod.when(callsTo(mockMethod.qualifiedName()))
+      .alwaysReturn('snarf');
+  mockMethod.when(callsTo(mockMethod.returnType()))
+      .alwaysReturn(mockReturnType);
+  
+  var functions = new HashMap<String, MethodMirror>();
+  functions['snarf'] = mockMethod;
+  
+  var mockLibraryMirror = new MockLibraryMirror();
+  mockLibraryMirror.when(callsTo(mockLibraryMirror.functions()))
+      .alwaysReturn(functions);
+  
+  var library = new BenchmarkLibrary._(mockLibraryMirror);
+  
+  library._initialize().then(expectAsync1((ignore) {
+    mockLibraryMirror.getLogs(callsTo("invoke")).verify(neverHappened);      
+    expect(library.benchmarks, isEmpty);
+  }));
 }
 
 void testBenchmarkLibraryInitializeSingleBenchmark() {
