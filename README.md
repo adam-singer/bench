@@ -31,5 +31,3 @@ Known Issues
 currently not supported by dart2js.
 - Bench must be run in the same isolate as the benchmark functions; remote
 invocations of a benchmark function may not make sense, but could be supported.
-- Bench currently runs *all* of the Benchmark functions in the isolate; we plan
-to make this more configurable.
