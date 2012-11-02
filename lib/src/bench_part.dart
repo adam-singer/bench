@@ -140,7 +140,11 @@ class BenchmarkResult {
   BenchmarkResult._(this.iterations) : libraries = new List<BenchmarkLibrary>();
 }
 
-/// A [BenchmarkHandler] function to process a given benchmark [result].
+/// A filter function predicate to apply to the given [library].  The filter
+/// function should return true if the [library] may contain benchmarks.
+typedef bool BenchmarkLibraryFilter(LibraryMirror library);
+
+/// A handler function to process a given benchmark [result].
 typedef void BenchmarkHandler(BenchmarkResult result);
 
 /// A [BenchmarkHandler] function that logs the [result] to bench's logger.
@@ -166,12 +170,15 @@ class Benchmarker {
   /// Runs all of the [Benchmark] functions in the current isolate's 
   /// [MirrorSystem] for the configurable number of global [iterations] and 
   /// reports a [BenchmarkResult] to the configured [handler] in addition to
-  /// returning the same [BenchmarkResult] as a [Future].
-  Future<BenchmarkResult> run({int iterations:1, 
-      BenchmarkHandler handler:benchmarkResultLogger}) {
+  /// returning the same [BenchmarkResult] as a [Future].  You may specify a
+  /// [libraryFilter] if you want to limit the set of libraries inspected for
+  /// [Benchmark] functions.
+  Future<BenchmarkResult> run({int iterations:1
+      , BenchmarkHandler handler:benchmarkResultLogger
+      , BenchmarkLibraryFilter libraryFilter:null}) {
     var completer = new Completer<BenchmarkResult>();    
     var result = new BenchmarkResult._(iterations);
-    _initialize(result).then((result) {
+    _initialize(result, libraryFilter).then((result) {
       _logger.info('running benchmarks...');
       _run(result).then((result) {
         if(handler != null) handler(result);
@@ -181,15 +188,17 @@ class Benchmarker {
     return completer.future;
   }
    
-  Future<BenchmarkResult> _initialize(BenchmarkResult result) {
+  Future<BenchmarkResult> _initialize(BenchmarkResult result, 
+      BenchmarkLibraryFilter libraryFilter) {
     var completer = new Completer();
     var mirrors = currentMirrorSystem();
     _logger.info('initializing isolate: ${mirrors.isolate.debugName}');     
     
-    // TODO: suport a user-defined 'bool filter(LibraryMirror lm)' predicate
-    // which we would apply to mirrors.libraries before we iterate on the result
+    // if the user specifies a library filter, apply it
+    var filteredLibraries = (libraryFilter == null) ? mirrors.libraries.values
+        : mirrors.libraries.values.filter(libraryFilter);
     
-    _initializeLibraries(mirrors.libraries.values.iterator(), 
+    _initializeLibraries(filteredLibraries.iterator(), 
         result.libraries).then((x) {
           completer.complete(result);
         });

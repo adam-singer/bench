@@ -10,7 +10,7 @@ void main() {
   // Bench logs to a Logger named 'bench'; you may use the logging API to
   // change the log level and add handlers to that logger or the root logger.
   Logger.root.on.record.add((record) => print('${record.message}'));
-    
+  
   // Create and run() a Benchmarker object; this will detect all of the
   // top-level functions in the current isolate which meet the criteria:
   //    - the function must return a Benchmark
@@ -19,6 +19,8 @@ void main() {
   // benchmark functions in the isolate.  You may also optionally parse the
   // result by passing a handler function or receiving the value of the
   // returned Future.  The default handler logs the result to bench's logger.
+  // You may also optionally pass a library filter if you want to limit the
+  // discovery of benchmark functions to a subset of the isolate's libraries.
   new Benchmarker().run();
 }
 
