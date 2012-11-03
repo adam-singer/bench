@@ -3,9 +3,8 @@ Bench
 
 A micro benchmark library for [dart](http://www.dartlang.org/).
 
-Bench uses the MIT license as described in the LICENSE file.
-
-Bench uses [semantic versioning](http://semver.org/).
+Bench uses the MIT license as described in the LICENSE file, and
+[semantic versioning](http://semver.org/).
 
 Benchmarking for Dart
 ---------------------
@@ -31,3 +30,4 @@ Known Issues
 currently not supported by dart2js.
 - Bench must be run in the same isolate as the benchmark functions; remote
 invocations of a benchmark function may not make sense, but could be supported.
+This would be of particular interest to support a command line utility.
