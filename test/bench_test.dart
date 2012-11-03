@@ -3,6 +3,7 @@ library bench_test;
 
 import 'dart:isolate';
 import 'dart:mirrors';
+import 'package:logging/logging.dart';
 import 'package:unittest/unittest.dart';
 
 part 'package:bench/src/bench_part.dart';
@@ -157,9 +158,32 @@ void testBenchmarkLibraryInitializeNoBenchmark() {
 }
 
 void testBenchmarkLibraryInitializeSingleBenchmark() {
-  // TODO:
+  
+  var mockReturnType = new MockClassMirror();
+  mockReturnType.qualifiedName = 'bench.Benchmark';
+  
+  var mockMethod = new MockMethodMirror();
+  mockMethod.isTopLevel = true;
+  mockMethod.qualifiedName = 'setup';
+  mockMethod.returnType = mockReturnType;
+  
+  var mockLibraryMirror = new MockLibraryMirror();
+  mockLibraryMirror.functions['setup'] = mockMethod;
+  
+  var benchmark = new Benchmark(() {});
+  var instance = new MockInstanceMirror();
+  instance.reflectee = benchmark;
+  mockLibraryMirror.invokeReturnValues['setup'] = instance;
+  
+  var library = new BenchmarkLibrary._(mockLibraryMirror);
+  
+  library._initialize().then(expectAsync1((ignore) {   
+    expect(mockLibraryMirror.invokeCount, equals(1));
+    expect(mockLibraryMirror.invokeCounts['setup'], equals(1));
+    expect(library.benchmarks.length, equals(1));
+    expect(library.benchmarks[0], equals(benchmark));
+  }));
 }
-
 
 // TODO: the following set of hand rolled mocks should be replaced by the Mock
 // class in the unittest library of the SDK if and when that becomes reliable
@@ -210,7 +234,27 @@ class MockDeclarationMirror implements DeclarationMirror {
   MirrorSystem mirrors;
   DeclarationMirror owner;
   String qualifiedName;
-  String simpleName;
+  String get simpleName {
+    int index = qualifiedName.lastIndexOf('.');
+    return (index == -1) ? qualifiedName : qualifiedName.substring(index);    
+  }
+}
+
+class MockInstanceMirror implements InstanceMirror {
+  bool hasReflectee;
+  MirrorSystem mirrors;
+  dynamic reflectee;
+  ClassMirror type;
+  Future<InstanceMirror> getField(String fieldName) {
+    throw new UnsupportedError('getField');
+  }
+  Future<InstanceMirror> invoke(String memberName, 
+      List<Object> positionalArguments, [Map<String, Object> namedArguments]) {
+    throw new UnsupportedError('invoke');
+  }
+  Future<InstanceMirror> setField(String fieldName, Object value) {
+    throw new UnsupportedError('setField');
+  }
 }
 
 class MockMethodMirror extends MockDeclarationMirror implements 
@@ -244,20 +288,29 @@ class MockLibraryMirror extends MockDeclarationMirror implements
     throw new UnsupportedError('getField');
   }
   
+  Map<String, int> invokeCounts = new Map<String, int>();
+  Map<String, InstanceMirror> invokeReturnValues = 
+      new Map<String, InstanceMirror>();
+  
   int get invokeCount {
     int count = 0;
-    invokeMap.forEach((k, v) {
+    invokeCounts.forEach((k, v) {
       count += v;
     });
     return count;
   }
-  Map<String, int> invokeMap = new Map<String, int>();
+  
   Future<InstanceMirror> invoke(String memberName, 
-      List<Object> positionalArguments, [Map<String, Object> namedArguments]) {
-    if(!invokeMap.containsKey(memberName)) {
-      invokeMap[memberName] = 0;
+      List<Object> positionalArguments, [Map<String, Object> namedArguments]) {    
+    var completer = new Completer<InstanceMirror>();
+    
+    if(!invokeCounts.containsKey(memberName)) {
+      invokeCounts[memberName] = 0;
     }
-    invokeMap[memberName]++;
+    invokeCounts[memberName]++;
+
+    completer.complete(invokeReturnValues[memberName]);
+    return completer.future;
   }
   
   Future<InstanceMirror> setField(String fieldName, Object value) {
