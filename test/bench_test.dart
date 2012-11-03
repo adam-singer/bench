@@ -28,10 +28,6 @@ void testBench() {
   });
 }
 
-class MockClassMirror extends Mock implements ClassMirror {}
-class MockLibraryMirror extends Mock implements LibraryMirror {}
-class MockMethodMirror extends Mock implements MethodMirror {}
-
 void testBenchmarkConstructor() {
   var method = () {};
   var benchmark = new Benchmark(method, warmup:42, measure:7, 
@@ -132,8 +128,7 @@ void testBenchmarkAsyncSeveralIterations() {
 
 void testBenchmarkLibraryConstructor() {  
   var mockLibraryMirror = new MockLibraryMirror();
-  mockLibraryMirror.when(callsTo(mockLibraryMirror.qualifiedName()))
-      .alwaysReturn('snarf');
+  mockLibraryMirror.qualifiedName = 'snarf';  
   var library = new BenchmarkLibrary._(mockLibraryMirror);
   expect(library._mirror, equals(mockLibraryMirror));
   expect(library.benchmarks, isEmpty);
@@ -143,30 +138,20 @@ void testBenchmarkLibraryConstructor() {
 void testBenchmarkLibraryInitializeNoBenchmark() {
     
   var mockReturnType = new MockClassMirror();
-  mockReturnType.when(callsTo(mockReturnType.qualifiedName()))
-      .alwaysReturn('bench.Benchmark_NOT');
+  mockReturnType.qualifiedName = 'bench.Benchmark_NOT';
   
   var mockMethod = new MockMethodMirror();
-  mockMethod.when(callsTo(mockMethod.isTopLevel()))
-      .alwaysReturn(true);
-  mockMethod.when(callsTo(mockMethod.parameters()))
-      .alwaysReturn([]);
-  mockMethod.when(callsTo(mockMethod.qualifiedName()))
-      .alwaysReturn('snarf');
-  mockMethod.when(callsTo(mockMethod.returnType()))
-      .alwaysReturn(mockReturnType);
-  
-  var functions = new HashMap<String, MethodMirror>();
-  functions['snarf'] = mockMethod;
+  mockMethod.isTopLevel = true;
+  mockMethod.qualifiedName = 'snarf';
+  mockMethod.returnType = mockReturnType;
   
   var mockLibraryMirror = new MockLibraryMirror();
-  mockLibraryMirror.when(callsTo(mockLibraryMirror.functions()))
-      .alwaysReturn(functions);
-  
+  mockLibraryMirror.functions['snarf'] = mockMethod;
+    
   var library = new BenchmarkLibrary._(mockLibraryMirror);
   
-  library._initialize().then(expectAsync1((ignore) {
-    mockLibraryMirror.getLogs(callsTo("invoke")).verify(neverHappened);      
+  library._initialize().then(expectAsync1((ignore) {   
+    expect(mockLibraryMirror.invokeCount, isZero);
     expect(library.benchmarks, isEmpty);
   }));
 }
@@ -174,3 +159,109 @@ void testBenchmarkLibraryInitializeNoBenchmark() {
 void testBenchmarkLibraryInitializeSingleBenchmark() {
   // TODO:
 }
+
+
+// TODO: the following set of hand rolled mocks should be replaced by the Mock
+// class in the unittest library of the SDK if and when that becomes reliable
+
+class MockClassMirror implements ClassMirror {
+  Map<String, MethodMirror> constructors = new Map<String, MethodMirror>();
+  final ClassMirror defaultFactory = null;
+  Map<String, MethodMirror> getters = new Map<String, MethodMirror>();
+  bool isClass = true;
+  bool isOriginalDeclaration;
+  bool isPrivate;
+  bool isTopLevel;
+  SourceLocation location;  
+  Map<String, Mirror> members = new Map<String, Mirror>();
+  Map<String, MethodMirror> methods = new Map<String, MethodMirror>();
+  MirrorSystem mirrors;
+  ClassMirror originalDeclaration;
+  DeclarationMirror owner;
+  String qualifiedName;
+  Map<String, MethodMirror> setters = new Map<String, MethodMirror>();
+  String simpleName;
+  ClassMirror superclass;
+  List<ClassMirror> superinterfaces = new List<ClassMirror>();
+  Map<String, TypeMirror> typeArguments = new Map<String, TypeMirror>();
+  Map<String, TypeVariableMirror> typeVariables = 
+      new Map<String, TypeVariableMirror>();
+  Map<String, VariableMirror> variables = new Map<String, VariableMirror>();
+  Future<InstanceMirror> getField(String fieldName) {
+    throw new UnsupportedError('getField');
+  }
+  Future<InstanceMirror> invoke(String memberName, 
+      List<Object> positionalArguments, [Map<String, Object> namedArguments]) {
+    throw new UnsupportedError('invoke');
+  }
+  Future<InstanceMirror> newInstance(String constructorName, 
+      List<Object> positionalArguments, [Map<String, Object> namedArguments]) {
+    throw new UnsupportedError('newInstance');
+  }
+  Future<InstanceMirror> setField(String fieldName, Object value) {
+    throw new UnsupportedError('setField');
+  }
+}
+
+class MockDeclarationMirror implements DeclarationMirror {
+  bool isPrivate;
+  bool isTopLevel;
+  SourceLocation location;
+  MirrorSystem mirrors;
+  DeclarationMirror owner;
+  String qualifiedName;
+  String simpleName;
+}
+
+class MockMethodMirror extends MockDeclarationMirror implements 
+    MethodMirror {
+  String constructorName;
+  bool isAbstract;
+  bool isConstConstructor;
+  bool isConstructor;
+  bool isFactoryConstructor;
+  bool isGenerativeConstructor;
+  bool isGetter;
+  bool isOperator;
+  bool isRedirectingConstructor;
+  bool isRegularMethod;
+  bool isSetter;
+  bool isStatic;
+  List<ParameterMirror> parameters = new List<ParameterMirror>();
+  TypeMirror returnType;
+}
+
+class MockLibraryMirror extends MockDeclarationMirror implements
+    LibraryMirror {
+  Map<String, ClassMirror> classes = new Map<String, ClassMirror>();
+  Map<String, MethodMirror> functions = new Map<String, MethodMirror>();
+  Map<String, MethodMirror> getters = new Map<String, MethodMirror>();
+  Map<String, Mirror> members = new Map<String, Mirror>();
+  Map<String, MethodMirror> setters = new Map<String, MethodMirror>();
+  String url;
+  Map<String, VariableMirror> variables = new Map<String, VariableMirror>();
+  Future<InstanceMirror> getField(String fieldName) {
+    throw new UnsupportedError('getField');
+  }
+  
+  int get invokeCount {
+    int count = 0;
+    invokeMap.forEach((k, v) {
+      count += v;
+    });
+    return count;
+  }
+  Map<String, int> invokeMap = new Map<String, int>();
+  Future<InstanceMirror> invoke(String memberName, 
+      List<Object> positionalArguments, [Map<String, Object> namedArguments]) {
+    if(!invokeMap.containsKey(memberName)) {
+      invokeMap[memberName] = 0;
+    }
+    invokeMap[memberName]++;
+  }
+  
+  Future<InstanceMirror> setField(String fieldName, Object value) {
+    throw new UnsupportedError('setField');
+  }
+}
+
